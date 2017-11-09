@@ -404,6 +404,7 @@ Blockly.Gesture.prototype.startDraggingBlock_ = function() {
  * @package
  */
 Blockly.Gesture.prototype.doStart = function(e) {
+  console.log(e);
   if (Blockly.utils.isTargetInput(e)) {
     this.cancel();
     return;
@@ -425,7 +426,10 @@ Blockly.Gesture.prototype.doStart = function(e) {
   Blockly.Tooltip.block();
 
   if (this.targetBlock_) {
-    this.targetBlock_.select();
+    if(e.shiftKey){
+        this.targetBlock_.select(true);
+    }
+    else this.targetBlock_.select();
   }
 
   if (Blockly.utils.isRightButton(e)) {
@@ -626,8 +630,12 @@ Blockly.Gesture.prototype.doBlockClick_ = function() {
  * @private
  */
 Blockly.Gesture.prototype.doWorkspaceClick_ = function() {
-  if (Blockly.selected) {
-    Blockly.selected.unselect();
+  Blockly.clearSelected_();
+  if (Blockly.selectedBlocks.length > 0) {
+    Blockly.selectedBlocks.forEach(function(block){
+        block.unselect();
+    });
+    Blockly.selectedBlocks = [];
   }
 };
 

@@ -71,7 +71,18 @@ Blockly.mainWorkspace = null;
  * Currently selected block.
  * @type {Blockly.Block}
  */
-Blockly.selected = null;
+Blockly.selectedBlocks = [];
+Object.defineProperty(Blockly,"selected",{
+    get:function(){
+      return Blockly.selectedBlocks[0];
+    },
+    set:function(block){
+        Blockly.selectedBlocks[0] = block;
+    },
+    configurable:true,
+    enumerable:true,
+});
+
 
 /**
  * All of the connections on blocks that are currently being dragged.
@@ -168,6 +179,7 @@ Blockly.svgResize = function(workspace) {
  * @private
  */
 Blockly.onKeyDown_ = function(e) {
+  Blockly.clearSelected_();
   if (Blockly.mainWorkspace.options.readOnly || Blockly.utils.isTargetInput(e)) {
     // No key actions on readonly workspaces.
     // When focused on an HTML text input widget, don't trap any keys.
@@ -187,8 +199,13 @@ Blockly.onKeyDown_ = function(e) {
     if (Blockly.mainWorkspace.isDragging()) {
       return;
     }
-    if (Blockly.selected && Blockly.selected.isDeletable()) {
-      deleteBlock = true;
+    if(Blockly.selectedBlocks.length > 0) {
+        deleteBlock = true;
+        Blockly.selectedBlocks.forEach(function (block) {
+            if (block && !block.isDeletable) {
+                deleteBlock = false;
+            }
+        })
     }
   } else if (e.altKey || e.ctrlKey || e.metaKey) {
     // Don't use meta keys during drags.
@@ -200,10 +217,10 @@ Blockly.onKeyDown_ = function(e) {
       if (e.keyCode == 67) {
         // 'c' for copy.
         Blockly.hideChaff();
-        Blockly.copy_(Blockly.selected);
+        Blockly.copy_(Blockly.selectedBlocks);
       } else if (e.keyCode == 88) {
         // 'x' for cut.
-        Blockly.copy_(Blockly.selected);
+        Blockly.copy_(Blockly.selectedBlocks);
         deleteBlock = true;
       }
     }
@@ -224,9 +241,16 @@ Blockly.onKeyDown_ = function(e) {
     // Common code for delete and cut.
     Blockly.Events.setGroup(true);
     Blockly.hideChaff();
-    Blockly.selected.dispose(/* heal */ true, true);
+    Blockly.selectedBlocks.forEach(function(block){
+        block.dispose(/* heal */ true, true);
+    });
+    Blockly.clearSelected_();
     Blockly.Events.setGroup(false);
   }
+};
+
+Blockly.clearSelected_ = function(){
+  Blockly.selectedBlocks = Blockly.selectedBlocks.filter(function(block){return block != null});
 };
 
 /**
@@ -234,10 +258,17 @@ Blockly.onKeyDown_ = function(e) {
  * @param {!Blockly.Block} block Block to be copied.
  * @private
  */
-Blockly.copy_ = function(block) {
+Blockly.copy_ = function(blocks) {
+  if(blocks.length > 1){
+    if(blocks[0].getNextBlock() !== blocks[1]){
+      blocks = blocks.reverse();
+    }
+  }
+  var block = blocks[0];
+  console.log(blocks);
   var xmlBlock = Blockly.Xml.blockToDom(block);
   // Copy only the selected block and internal blocks.
-  Blockly.Xml.deleteNext(xmlBlock);
+  Blockly.Xml.deleteNext(xmlBlock,blocks.map(function(block){return block.id}));
   // Encode start position in XML.
   var xy = block.getRelativeToSurfaceXY();
   xmlBlock.setAttribute('x', block.RTL ? -xy.x : xy.x);
@@ -257,7 +288,7 @@ Blockly.duplicate_ = function(block) {
   var clipboardSource = Blockly.clipboardSource_;
 
   // Create a duplicate via a copy/paste operation.
-  Blockly.copy_(block);
+  Blockly.copy_([block]);
   block.workspace.paste(Blockly.clipboardXml_);
 
   // Restore the clipboard.

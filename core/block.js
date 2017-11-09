@@ -1520,3 +1520,14 @@ Blockly.Block.prototype.toDevString = function() {
   }
   return msg;
 };
+
+Blockly.Block.prototype.isDescendantOf = function(block) {
+  var it = this;
+  while(it && it !== block){
+    it = it.getParent();
+  }
+  if(!it){
+    return false;
+  }
+  else return true;
+};

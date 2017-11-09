@@ -154,44 +154,126 @@ Blockly.BlockSvg.prototype.initSvg = function() {
 /**
  * Select this block.  Highlight it visually.
  */
-Blockly.BlockSvg.prototype.select = function() {
+Blockly.BlockSvg.prototype.select = function(contiguousSelect) {
+
+
+
   if (this.isShadow() && this.getParent()) {
     // Shadow blocks should not be selected.
-    this.getParent().select();
+    this.getParent().select(contiguousSelect);
     return;
   }
-  if (Blockly.selected == this) {
-    return;
+
+  if(contiguousSelect){
+
+      //fall back to normal select;
+      if(Blockly.selectedBlocks.length === 0){
+        this.select();
+        return;
+      }
+      var startBlock = Blockly.selected;
+      while (Blockly.selectedBlocks.length > 0){
+          Blockly.selectedBlocks.forEach(function(block){
+              // var oldId = block.id;
+              // Unselect any previously selected block.
+              Blockly.Events.disable();
+              try {
+                  block.unselect();
+              } finally {
+                  Blockly.Events.enable();
+              }
+          });
+          Blockly.selectedBlocks = [];
+      }
+      // var event = new Blockly.Events.Ui(null, 'selected', null, this.id);
+      // event.workspaceId = this.workspace.id;
+      // Blockly.Events.fire(event);
+      startBlock.getBlocksInPathTo(this,true).forEach(function(block){
+          Blockly.selectedBlocks.push(block);
+          block.addSelect();
+      });
   }
-  var oldId = null;
-  if (Blockly.selected) {
-    oldId = Blockly.selected.id;
-    // Unselect any previously selected block.
-    Blockly.Events.disable();
-    try {
-      Blockly.selected.unselect();
-    } finally {
-      Blockly.Events.enable();
-    }
+  else{
+      if(Blockly.selectedBlocks.length > 1){
+            Blockly.selectedBlocks.forEach(function(block,i){
+                if(i > 0) {
+                    var oldId = block.id;
+                    // Unselect any previously selected block.
+                    Blockly.Events.disable();
+                    try {
+                        block.unselect();
+                    } finally {
+                        Blockly.Events.enable();
+                    }
+                }
+            });
+            Blockly.selectedBlocks.splice(1);
+      }
+      if (Blockly.selected == this) {
+          return;
+      }
+      var oldId = null;
+      if (Blockly.selected) {
+          oldId = Blockly.selected.id;
+          // Unselect any previously selected block.
+          Blockly.Events.disable();
+          try {
+              Blockly.selected.unselect();
+          } finally {
+              Blockly.Events.enable();
+          }
+      }
+      var event = new Blockly.Events.Ui(null, 'selected', oldId, this.id);
+      event.workspaceId = this.workspace.id;
+      Blockly.Events.fire(event);
+      Blockly.selected = this;
+      this.addSelect();
   }
-  var event = new Blockly.Events.Ui(null, 'selected', oldId, this.id);
-  event.workspaceId = this.workspace.id;
-  Blockly.Events.fire(event);
-  Blockly.selected = this;
-  this.addSelect();
+
 };
 
+
+/**
+ *
+ * @param target
+ */
+Blockly.BlockSvg.prototype.getBlocksInPathTo = function(target,tryReverse){
+
+    var path = [];
+    var block = this;
+    while(block && !target.isDescendantOf(block) ){
+      path.push(block);
+      block = block.getNextBlock();
+    }
+    if(!block){
+      if(tryReverse){
+          var reverseResult = target.getBlocksInPathTo(this);
+          if(reverseResult.length >= 0){
+              return reverseResult.reverse();
+          }
+          else return [block];
+      }
+      else{
+          return [];
+      }
+    }
+    else{
+      path.push(target);
+      return path;
+    }
+}
 /**
  * Unselect this block.  Remove its highlighting.
  */
 Blockly.BlockSvg.prototype.unselect = function() {
-  if (Blockly.selected != this) {
+  if (Blockly.selectedBlocks.indexOf(this) === -1) {
     return;
   }
   var event = new Blockly.Events.Ui(null, 'selected', this.id, null);
   event.workspaceId = this.workspace.id;
   Blockly.Events.fire(event);
-  Blockly.selected = null;
+  Blockly.selectedBlocks[Blockly.selectedBlocks.indexOf(this)] = null;
+  // Blockly.selected = null;
   this.removeSelect();
 };
 
@@ -832,7 +914,7 @@ Blockly.BlockSvg.prototype.dispose = function(healStack, animate) {
   // contents once the block is disposed.
   var blockWorkspace = this.workspace;
   // If this block is being dragged, unlink the mouse events.
-  if (Blockly.selected == this) {
+  if (Blockly.selectedBlocks.indexOf(this) !== -1) {
     this.unselect();
     this.workspace.cancelCurrentGesture();
   }

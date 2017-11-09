@@ -703,10 +703,16 @@ Blockly.Xml.domToBlockHeadless_ = function(xmlBlock, workspace) {
  * Remove any 'next' block (statements in a stack).
  * @param {!Element} xmlBlock XML block element.
  */
-Blockly.Xml.deleteNext = function(xmlBlock) {
+Blockly.Xml.deleteNext = function(xmlBlock,keepChildsId) {
   for (var i = 0, child; child = xmlBlock.childNodes[i]; i++) {
     if (child.nodeName.toLowerCase() == 'next') {
-      xmlBlock.removeChild(child);
+      var blockId = child.childNodes[0].id;
+      if(keepChildsId && keepChildsId.indexOf(blockId) !== -1){
+          Blockly.Xml.deleteNext(child.childNodes[0],keepChildsId)
+      }
+      else{
+          xmlBlock.removeChild(child);
+      }
       break;
     }
   }
