@@ -241,7 +241,7 @@ Blockly.BlockSvg.prototype.getBlocksInPathTo = function(target,tryReverse){
 
     var path = [];
     var block = this;
-    while(block && !target.isDescendantOf(block) ){
+    while(block && !target.isSurroundDescendantOf(block) ){
       path.push(block);
       block = block.getNextBlock();
     }
@@ -258,7 +258,7 @@ Blockly.BlockSvg.prototype.getBlocksInPathTo = function(target,tryReverse){
       }
     }
     else{
-      path.push(target);
+      path.push(block);
       return path;
     }
 }

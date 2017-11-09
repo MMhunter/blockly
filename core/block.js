@@ -1521,10 +1521,10 @@ Blockly.Block.prototype.toDevString = function() {
   return msg;
 };
 
-Blockly.Block.prototype.isDescendantOf = function(block) {
+Blockly.Block.prototype.isSurroundDescendantOf = function(block) {
   var it = this;
   while(it && it !== block){
-    it = it.getParent();
+    it = it.getSurroundParent();
   }
   if(!it){
     return false;
