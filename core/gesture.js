@@ -390,6 +390,9 @@ Blockly.Gesture.prototype.updateIsDragging_ = function() {
  * @private
  */
 Blockly.Gesture.prototype.startDraggingBlock_ = function() {
+  if(this.targetBlock_.isSelected()){
+      this.targetBlock_ = Blockly.isSelectionReversed()?Blockly.selectionTail():Blockly.selected;
+  }
   this.blockDragger_ = new Blockly.BlockDragger(this.targetBlock_,
       this.startWorkspace_);
   this.blockDragger_.startBlockDrag(this.currentDragDeltaXY_);
@@ -404,7 +407,6 @@ Blockly.Gesture.prototype.startDraggingBlock_ = function() {
  * @package
  */
 Blockly.Gesture.prototype.doStart = function(e) {
-  console.log(e);
   if (Blockly.utils.isTargetInput(e)) {
     this.cancel();
     return;

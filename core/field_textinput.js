@@ -205,17 +205,20 @@ Blockly.FieldTextInput.prototype.showInlineEditor_ = function(quietInput) {
  */
 Blockly.FieldTextInput.prototype.bindEvents_ = function(htmlInput) {
   // Bind to keydown -- trap Enter without IME and Esc to hide.
-  htmlInput.onKeyDownWrapper_ =
-      Blockly.bindEventWithChecks_(htmlInput, 'keydown', this,
-      this.onHtmlInputKeyDown_);
-  // Bind to keyup -- trap Enter; resize after every keystroke.
-  htmlInput.onKeyUpWrapper_ =
-      Blockly.bindEventWithChecks_(htmlInput, 'keyup', this,
+  // htmlInput.onKeyDownWrapper_ =
+  //     Blockly.bindEventWithChecks_(htmlInput, 'keydown', this,
+  //     this.onHtmlInputKeyDown_);
+  // // Bind to keyup -- trap Enter; resize after every keystroke.
+  // htmlInput.onKeyUpWrapper_ =
+  //     Blockly.bindEventWithChecks_(htmlInput, 'keyup', this,
+  //     this.onHtmlInputChange_);
+  // // Bind to keyPress -- repeatedly resize when holding down a key.
+  htmlInput.onChangeWrapper_ =
+      Blockly.bindEventWithChecks_(htmlInput, 'change', this,
       this.onHtmlInputChange_);
-  // Bind to keyPress -- repeatedly resize when holding down a key.
-  htmlInput.onKeyPressWrapper_ =
-      Blockly.bindEventWithChecks_(htmlInput, 'keypress', this,
-      this.onHtmlInputChange_);
+  // htmlInput.onChangeWrapper_ =
+  //       Blockly.bindEventWithChecks_(htmlInput, 'change', this,
+  //           this.onHtmlInputChangeEnd_);
   htmlInput.onWorkspaceChangeWrapper_ = this.resizeEditor_.bind(this);
   this.workspace_.addChangeListener(htmlInput.onWorkspaceChangeWrapper_);
 };
@@ -226,9 +229,9 @@ Blockly.FieldTextInput.prototype.bindEvents_ = function(htmlInput) {
  * @private
  */
 Blockly.FieldTextInput.prototype.unbindEvents_ = function(htmlInput) {
-  Blockly.unbindEvent_(htmlInput.onKeyDownWrapper_);
-  Blockly.unbindEvent_(htmlInput.onKeyUpWrapper_);
-  Blockly.unbindEvent_(htmlInput.onKeyPressWrapper_);
+  // Blockly.unbindEvent_(htmlInput.onKeyDownWrapper_);
+  // Blockly.unbindEvent_(htmlInput.onKeyUpWrapper_);
+  Blockly.unbindEvent_(htmlInput.onChangeWrapper_);
   this.workspace_.removeChangeListener(
       htmlInput.onWorkspaceChangeWrapper_);
 };
@@ -274,6 +277,7 @@ Blockly.FieldTextInput.prototype.onHtmlInputChange_ = function(e) {
   this.resizeEditor_();
   Blockly.svgResize(this.sourceBlock_.workspace);
 };
+
 
 /**
  * Check to see if the contents of the editor validates.

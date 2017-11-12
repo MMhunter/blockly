@@ -172,19 +172,17 @@ Blockly.BlockSvg.prototype.select = function(contiguousSelect) {
         return;
       }
       var startBlock = Blockly.selected;
-      while (Blockly.selectedBlocks.length > 0){
-          Blockly.selectedBlocks.forEach(function(block){
-              // var oldId = block.id;
-              // Unselect any previously selected block.
-              Blockly.Events.disable();
-              try {
-                  block.unselect();
-              } finally {
-                  Blockly.Events.enable();
-              }
-          });
-          Blockly.selectedBlocks = [];
-      }
+      Blockly.selectedBlocks.forEach(function(block){
+          // var oldId = block.id;
+          // Unselect any previously selected block.
+          Blockly.Events.disable();
+          try {
+              block.unselect();
+          } finally {
+              Blockly.Events.enable();
+          }
+      });
+      Blockly.selectedBlocks = [];
       // var event = new Blockly.Events.Ui(null, 'selected', null, this.id);
       // event.workspaceId = this.workspace.id;
       // Blockly.Events.fire(event);
@@ -194,24 +192,21 @@ Blockly.BlockSvg.prototype.select = function(contiguousSelect) {
       });
   }
   else{
-      if(Blockly.selectedBlocks.length > 1){
-            Blockly.selectedBlocks.forEach(function(block,i){
-                if(i > 0) {
-                    var oldId = block.id;
-                    // Unselect any previously selected block.
-                    Blockly.Events.disable();
-                    try {
-                        block.unselect();
-                    } finally {
-                        Blockly.Events.enable();
-                    }
-                }
-            });
-            Blockly.selectedBlocks.splice(1);
-      }
-      if (Blockly.selected == this) {
+
+      if (this.isSelected()) {
           return;
       }
+      Blockly.selectedBlocks.forEach(function(block){
+          // var oldId = block.id;
+          // Unselect any previously selected block.
+          Blockly.Events.disable();
+          try {
+              block.unselect();
+          } finally {
+              Blockly.Events.enable();
+          }
+      });
+      Blockly.selectedBlocks = [];
       var oldId = null;
       if (Blockly.selected) {
           oldId = Blockly.selected.id;
@@ -241,25 +236,42 @@ Blockly.BlockSvg.prototype.getBlocksInPathTo = function(target,tryReverse){
 
     var path = [];
     var block = this;
-    while(block && !target.isSurroundDescendantOf(block) ){
+    while(block && !target.isSurroundDescendantOf(block)){
       path.push(block);
       block = block.getNextBlock();
     }
-    if(!block){
-      if(tryReverse){
-          var reverseResult = target.getBlocksInPathTo(this);
-          if(reverseResult.length >= 0){
-              return reverseResult.reverse();
-          }
-          else return [block];
-      }
-      else{
-          return [];
-      }
+    if(block){
+        path.push(block);
+        return path;
+    }
+
+    //reverse search
+    path = [];
+    block = target;
+    while(block && !this.isSurroundDescendantOf(block)){
+        path.push(block);
+        if(block.getSurroundParent()){
+            block = null;
+        }
+        else {
+            block = block.getParent();
+        }
+    }
+    if(block){
+        path.push(block);
+        return path.reverse();
+    }
+
+
+    if(tryReverse){
+        var reverseResult = target.getBlocksInPathTo(this);
+        if(reverseResult.length >= 0){
+            return reverseResult.reverse();
+        }
+        else return [block];
     }
     else{
-      path.push(block);
-      return path;
+        return [];
     }
 }
 /**
@@ -273,6 +285,7 @@ Blockly.BlockSvg.prototype.unselect = function() {
   event.workspaceId = this.workspace.id;
   Blockly.Events.fire(event);
   Blockly.selectedBlocks[Blockly.selectedBlocks.indexOf(this)] = null;
+  Blockly.selectedBlocksNeedsClear_ = true;
   // Blockly.selected = null;
   this.removeSelect();
 };
@@ -550,6 +563,25 @@ Blockly.BlockSvg.prototype.setCollapsed = function(collapsed) {
     renderList.push.apply(renderList, input.setVisible(!collapsed));
   }
 
+  //bump neighbours if it is like a start point
+  var display = !collapsed ? 'block' : 'none';
+  if(!this.previousConnection){
+      Blockly.Events.disable();
+      block = this.getNextBlock();
+      while(block){
+          block.getSvgRoot().style.display = display;
+          block.setCollapsed(collapsed)
+          // if (collapsed) {
+          //
+          // }
+          // else{
+          //     renderList.push(block);
+          // }
+          block = block.getNextBlock();
+      }
+      Blockly.Events.enable();
+  }
+
   var COLLAPSED_INPUT_NAME = '_TEMP_COLLAPSED_INPUT';
   if (collapsed) {
     var icons = this.getIcons();
@@ -673,7 +705,10 @@ Blockly.BlockSvg.prototype.showContextMenu_ = function(e) {
       text: Blockly.Msg.DUPLICATE_BLOCK,
       enabled: true,
       callback: function() {
-        Blockly.duplicate_(block);
+          if(Blockly.selectedBlocks.indexOf(block) !== -1){
+              Blockly.duplicate_(Blockly.selectedBlocks);
+          }
+          else Blockly.duplicate_([block]);
       }
     };
     if (this.getDescendants().length > this.workspace.remainingCapacity()) {

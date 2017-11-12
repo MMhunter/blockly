@@ -72,6 +72,9 @@ Blockly.mainWorkspace = null;
  * @type {Blockly.Block}
  */
 Blockly.selectedBlocks = [];
+
+Blockly.selectedBlocksNeedsClear_ = false;
+
 Object.defineProperty(Blockly,"selected",{
     get:function(){
       return Blockly.selectedBlocks[0];
@@ -249,9 +252,31 @@ Blockly.onKeyDown_ = function(e) {
   }
 };
 
+
+/**
+ * delete null elements in selected blocks array
+ * @private
+ */
 Blockly.clearSelected_ = function(){
-  Blockly.selectedBlocks = Blockly.selectedBlocks.filter(function(block){return block != null});
+  if(Blockly.selectedBlocksNeedsClear_){
+      Blockly.selectedBlocks = Blockly.selectedBlocks.filter(function(block){return block != null});
+      Blockly.selectedBlocksNeedsClear_ = false;
+  }
 };
+
+Blockly.selectionTail = function(){
+    if(Blockly.selectedBlocks.length > 0){
+        return Blockly.selectedBlocks[Blockly.selectedBlocks.length-1];
+    }
+    return null;
+}
+
+Blockly.isSelectionReversed = function(){
+    if(Blockly.selectedBlocks.length > 1){
+        return Blockly.selectedBlocks[0].getNextBlock() !== Blockly.selectedBlocks[1];
+    }
+    return false;
+}
 
 /**
  * Copy a block onto the local clipboard.
@@ -282,14 +307,14 @@ Blockly.copy_ = function(blocks) {
  * @param {!Blockly.Block} block Block to be copied.
  * @private
  */
-Blockly.duplicate_ = function(block) {
+Blockly.duplicate_ = function(blocks) {
   // Save the clipboard.
   var clipboardXml = Blockly.clipboardXml_;
   var clipboardSource = Blockly.clipboardSource_;
 
   // Create a duplicate via a copy/paste operation.
-  Blockly.copy_([block]);
-  block.workspace.paste(Blockly.clipboardXml_);
+  Blockly.copy_(blocks);
+  blocks[0].workspace.paste(Blockly.clipboardXml_);
 
   // Restore the clipboard.
   Blockly.clipboardXml_ = clipboardXml;

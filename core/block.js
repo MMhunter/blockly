@@ -265,30 +265,62 @@ Blockly.Block.prototype.dispose = function(healStack) {
  *   stack.  Defaults to false.
  */
 Blockly.Block.prototype.unplug = function(opt_healStack) {
+
   if (this.outputConnection) {
     if (this.outputConnection.isConnected()) {
       // Disconnect from any superior block.
       this.outputConnection.disconnect();
     }
   } else if (this.previousConnection) {
-    var previousTarget = null;
-    if (this.previousConnection.isConnected()) {
-      // Remember the connection that any next statements need to connect to.
-      previousTarget = this.previousConnection.targetConnection;
-      // Detach this block from the parent's tree.
-      this.previousConnection.disconnect();
+
+    if(this.isSelected()){
+      this.unplugBlocksUntil(Blockly.isSelectionReversed()?Blockly.selected:Blockly.selectionTail(),opt_healStack);
     }
-    var nextBlock = this.getNextBlock();
-    if (opt_healStack && nextBlock) {
+    else{
+      this.unplugBlocksUntil(this,opt_healStack);
+    }
+
+  }
+};
+
+Blockly.Block.prototype.unplugBlocksUntil = function(end,opt_healStack,reverseDirection){
+  var startBlock;
+  var endBlock;
+  if(!reverseDirection){
+     startBlock = this;
+     endBlock = end;
+  }
+  else{
+      startBlock = end;
+      endBlock = this;
+  }
+  var previousTarget = null;
+  if (startBlock.previousConnection.isConnected()) {
+      // Remember the connection that any next statements need to connect to.
+      previousTarget = startBlock.previousConnection.targetConnection;
+      // Detach this block from the parent's tree.
+      startBlock.previousConnection.disconnect();
+  }
+
+  var nextBlock = endBlock.getNextBlock();
+  if (opt_healStack && nextBlock) {
       // Disconnect the next statement.
-      var nextTarget = this.nextConnection.targetConnection;
+      var nextTarget = endBlock.nextConnection.targetConnection;
       nextTarget.disconnect();
       if (previousTarget && previousTarget.checkType_(nextTarget)) {
-        // Attach the next statement to the previous statement.
-        previousTarget.connect(nextTarget);
+          // Attach the next statement to the previous statement.
+          previousTarget.connect(nextTarget);
       }
-    }
   }
+}
+
+/**
+ *
+ * @returns {boolean} whether this block is selected
+ */
+Blockly.Block.prototype.isSelected = function(){
+    Blockly.clearSelected_();
+    return Blockly.selectedBlocks.indexOf(this) !== -1
 };
 
 /**

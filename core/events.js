@@ -96,6 +96,8 @@ Blockly.Events.BLOCK_CHANGE = Blockly.Events.CHANGE;
  */
 Blockly.Events.MOVE = 'move';
 
+Blockly.Events.MOVE_END = 'move_end';
+
 /**
  * Name of event that moves a block.
  * @const
@@ -699,6 +701,16 @@ Blockly.Events.Change.prototype.run = function(forward) {
       console.warn('Unknown change type: ' + this.element);
   }
 };
+
+Blockly.Events.MoveEnd = function(block) {
+    if (!block) {
+        return;  // Blank event to be populated by fromJson.
+    }
+    Blockly.Events.MoveEnd.superClass_.constructor.call(this, block);
+};
+goog.inherits(Blockly.Events.MoveEnd, Blockly.Events.Abstract);
+Blockly.Events.MoveEnd.prototype.type = Blockly.Events.MOVE_END;
+
 
 /**
  * Class for a block move event.  Created before the move.

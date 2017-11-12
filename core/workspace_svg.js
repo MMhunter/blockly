@@ -906,7 +906,14 @@ Blockly.WorkspaceSvg.prototype.paste = function(xmlBlock) {
   if (Blockly.Events.isEnabled() && !block.isShadow()) {
     Blockly.Events.fire(new Blockly.Events.BlockCreate(block));
   }
+  var endBlock = block;
+  while(endBlock.getNextBlock()){
+      endBlock = endBlock.getNextBlock();
+  };
   block.select();
+  if(endBlock !== block) {
+      endBlock.select(true);
+  }
 };
 
 /**

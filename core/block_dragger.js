@@ -154,13 +154,21 @@ Blockly.BlockDragger.prototype.startBlockDrag = function(currentDragDeltaXY) {
   Blockly.BlockSvg.disconnectUiStop_();
 
   if (this.draggingBlock_.getParent()) {
-    this.draggingBlock_.unplug();
+    this.draggingBlock_.unplug(true);
     var delta = this.pixelsToWorkspaceUnits_(currentDragDeltaXY);
     var newLoc = goog.math.Coordinate.sum(this.startXY_, delta);
 
     this.draggingBlock_.translate(newLoc.x, newLoc.y);
     this.draggingBlock_.disconnectUiEffect();
   }
+    // for (var i = 0; i < connections.length; i++) {
+    //     var connection = connections[i];
+    //     if (connection.isConnected()) {
+    //         connection.disconnect();
+    //     }
+    //     connections[i].dispose();
+    // }
+
   this.draggingBlock_.setDragging(true);
   // For future consideration: we may be able to put moveToDragSurface inside
   // the block dragger, which would also let the block not track the block drag
@@ -238,6 +246,8 @@ Blockly.BlockDragger.prototype.fireMoveEvent_ = function() {
   event.oldCoordinate = this.startXY_;
   event.recordNew();
   Blockly.Events.fire(event);
+
+  Blockly.Events.fire(new Blockly.Events.MoveEnd(this.draggingBlock_));
 };
 
 /**
