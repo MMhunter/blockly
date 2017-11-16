@@ -400,7 +400,11 @@ Blockly.BlockSvg.prototype.getRelativeToSurfaceXY = function() {
  */
 Blockly.BlockSvg.prototype.moveBy = function(dx, dy) {
   goog.asserts.assert(!this.parentBlock_, 'Block has parent.');
-  var event = new Blockly.Events.BlockMove(this);
+  var endBlock = this;
+  while(endBlock.getNextBlock()){
+      endBlock = endBlock.getNextBlock();
+  }
+  var event = new Blockly.Events.BlockMove(this,endBlock);
   var xy = this.getRelativeToSurfaceXY();
   this.translate(xy.x + dx, xy.y + dy);
   this.moveConnections_(dx, dy);
@@ -948,11 +952,7 @@ Blockly.BlockSvg.prototype.dispose = function(healStack, animate) {
   // Save the block's workspace temporarily so we can resize the
   // contents once the block is disposed.
   var blockWorkspace = this.workspace;
-  // If this block is being dragged, unlink the mouse events.
-  if (Blockly.selectedBlocks.indexOf(this) !== -1) {
-    this.unselect();
-    this.workspace.cancelCurrentGesture();
-  }
+
   // If this block has a context menu open, close it.
   if (Blockly.ContextMenu.currentBlock == this) {
     Blockly.ContextMenu.hide();
@@ -962,6 +962,11 @@ Blockly.BlockSvg.prototype.dispose = function(healStack, animate) {
     this.unplug(healStack);
     this.disposeUiEffect();
   }
+// If this block is being dragged, unlink the mouse events.
+if (this.isSelected()) {
+    this.unselect();
+    this.workspace.cancelCurrentGesture();
+}
   // Stop rerendering.
   this.rendered = false;
 

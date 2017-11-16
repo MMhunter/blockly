@@ -324,9 +324,9 @@ Blockly.RenderedConnection.prototype.isConnectionAllowed = function(candidate,
  * @private
  */
 Blockly.RenderedConnection.prototype.disconnectInternal_ = function(parentBlock,
-    childBlock) {
-  Blockly.RenderedConnection.superClass_.disconnectInternal_.call(this,
-      parentBlock, childBlock);
+    childBlock,endBlock) {
+  Blockly.RenderedConnection.superClass_.disconnectInternal_.apply(this,
+      arguments);
   // Rerender the parent so that it may reflow.
   if (parentBlock.rendered) {
     parentBlock.render();
@@ -379,7 +379,7 @@ Blockly.RenderedConnection.prototype.neighbours_ = function(maxLimit) {
  * @private
  */
 Blockly.RenderedConnection.prototype.connect_ = function(childConnection) {
-  Blockly.RenderedConnection.superClass_.connect_.call(this, childConnection);
+  Blockly.RenderedConnection.superClass_.connect_.apply(this, arguments);
 
   var parentConnection = this;
   var parentBlock = parentConnection.getSourceBlock();

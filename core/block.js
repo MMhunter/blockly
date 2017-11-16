@@ -264,7 +264,7 @@ Blockly.Block.prototype.dispose = function(healStack) {
  * @param {boolean} opt_healStack Disconnect child statement and reconnect
  *   stack.  Defaults to false.
  */
-Blockly.Block.prototype.unplug = function(opt_healStack) {
+Blockly.Block.prototype.unplug = function(opt_healStack,endBlock) {
 
   if (this.outputConnection) {
     if (this.outputConnection.isConnected()) {
@@ -273,8 +273,8 @@ Blockly.Block.prototype.unplug = function(opt_healStack) {
     }
   } else if (this.previousConnection) {
 
-    if(this.isSelected()){
-      this.unplugBlocksUntil(Blockly.isSelectionReversed()?Blockly.selected:Blockly.selectionTail(),opt_healStack);
+    if(endBlock){
+      this.unplugBlocksUntil(endBlock,opt_healStack);
     }
     else{
       this.unplugBlocksUntil(this,opt_healStack);
@@ -299,7 +299,7 @@ Blockly.Block.prototype.unplugBlocksUntil = function(end,opt_healStack,reverseDi
       // Remember the connection that any next statements need to connect to.
       previousTarget = startBlock.previousConnection.targetConnection;
       // Detach this block from the parent's tree.
-      startBlock.previousConnection.disconnect();
+      startBlock.previousConnection.disconnect(endBlock);
   }
 
   var nextBlock = endBlock.getNextBlock();
@@ -1484,7 +1484,11 @@ Blockly.Block.prototype.getRelativeToSurfaceXY = function() {
  */
 Blockly.Block.prototype.moveBy = function(dx, dy) {
   goog.asserts.assert(!this.parentBlock_, 'Block has parent.');
-  var event = new Blockly.Events.BlockMove(this);
+  var endBlock = this;
+  while(endBlock.getNextBlock()){
+      endBlock = endBlock.getNextBlock();
+  }
+  var event = new Blockly.Events.BlockMove(this,endBlock);
   this.xy_.translate(dx, dy);
   event.recordNew();
   Blockly.Events.fire(event);

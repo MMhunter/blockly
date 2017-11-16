@@ -35,17 +35,19 @@ goog.require('goog.asserts');
 /**
  * Class for a block dragger.  It moves blocks around the workspace when they
  * are being dragged by a mouse or touch.
- * @param {!Blockly.Block} block The block to drag.
+ * @param {!Blockly.Block} blocks The blocks to drag.
  * @param {!Blockly.WorkspaceSvg} workspace The workspace to drag on.
  * @constructor
  */
-Blockly.BlockDragger = function(block, workspace) {
+Blockly.BlockDragger = function(block,endBlock, workspace) {
   /**
    * The top block in the stack that is being dragged.
    * @type {!Blockly.BlockSvg}
    * @private
    */
   this.draggingBlock_ = block;
+
+  this.draggingEndBlock_ = endBlock;
 
   /**
    * The workspace on which the block is being dragged.
@@ -154,7 +156,7 @@ Blockly.BlockDragger.prototype.startBlockDrag = function(currentDragDeltaXY) {
   Blockly.BlockSvg.disconnectUiStop_();
 
   if (this.draggingBlock_.getParent()) {
-    this.draggingBlock_.unplug(true);
+    this.draggingBlock_.unplug(true,Blockly.isSelectionReversed()?Blockly.selected:Blockly.selectionTail());
     var delta = this.pixelsToWorkspaceUnits_(currentDragDeltaXY);
     var newLoc = goog.math.Coordinate.sum(this.startXY_, delta);
 
@@ -242,7 +244,7 @@ Blockly.BlockDragger.prototype.endBlockDrag = function(e, currentDragDeltaXY) {
  * @private
  */
 Blockly.BlockDragger.prototype.fireMoveEvent_ = function() {
-  var event = new Blockly.Events.BlockMove(this.draggingBlock_);
+  var event = new Blockly.Events.BlockMove(this.draggingBlock_,this.draggingEndBlock_);
   event.oldCoordinate = this.startXY_;
   event.recordNew();
   Blockly.Events.fire(event);

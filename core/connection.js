@@ -219,7 +219,11 @@ Blockly.Connection.prototype.connect_ = function(childConnection) {
 
   var event;
   if (Blockly.Events.isEnabled()) {
-    event = new Blockly.Events.BlockMove(childBlock);
+    var endBlock = childBlock;
+    while(endBlock.getNextBlock()){
+        endBlock = endBlock.getNextBlock();
+    }
+    event = new Blockly.Events.BlockMove(childBlock,endBlock);
   }
   // Establish the connections.
   Blockly.Connection.connectReciprocally_(parentConnection, childConnection);
@@ -470,7 +474,7 @@ Blockly.Connection.lastConnectionInRow_ = function(startBlock, orphanBlock) {
 /**
  * Disconnect this connection.
  */
-Blockly.Connection.prototype.disconnect = function() {
+Blockly.Connection.prototype.disconnect = function(endBlock) {
   var otherConnection = this.targetConnection;
   goog.asserts.assert(otherConnection, 'Source connection not connected.');
   goog.asserts.assert(otherConnection.targetConnection == this,
@@ -488,7 +492,7 @@ Blockly.Connection.prototype.disconnect = function() {
     childBlock = this.sourceBlock_;
     parentConnection = otherConnection;
   }
-  this.disconnectInternal_(parentBlock, childBlock);
+  this.disconnectInternal_(parentBlock, childBlock,endBlock);
   parentConnection.respawnShadow_();
 };
 
@@ -499,10 +503,10 @@ Blockly.Connection.prototype.disconnect = function() {
  * @private
  */
 Blockly.Connection.prototype.disconnectInternal_ = function(parentBlock,
-    childBlock) {
+    childBlock,endBlock) {
   var event;
   if (Blockly.Events.isEnabled()) {
-    event = new Blockly.Events.BlockMove(childBlock);
+    event = new Blockly.Events.BlockMove(childBlock,endBlock);
   }
   var otherConnection = this.targetConnection;
   otherConnection.targetConnection = null;

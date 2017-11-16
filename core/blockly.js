@@ -235,9 +235,11 @@ Blockly.onKeyDown_ = function(e) {
         Blockly.Events.setGroup(false);
       }
     } else if (e.keyCode == 90) {
-      // 'z' for undo 'Z' is for redo.
-      Blockly.hideChaff();
-      Blockly.mainWorkspace.undo(e.shiftKey);
+      if(!Blockly.stopKeyDownUndo){
+          // 'z' for undo 'Z' is for redo.
+          Blockly.hideChaff();
+          Blockly.mainWorkspace.undo(e.shiftKey);
+      }
     }
   }
   if (deleteBlock) {

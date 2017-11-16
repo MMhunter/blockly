@@ -393,7 +393,7 @@ Blockly.Gesture.prototype.startDraggingBlock_ = function() {
   if(this.targetBlock_.isSelected()){
       this.targetBlock_ = Blockly.isSelectionReversed()?Blockly.selectionTail():Blockly.selected;
   }
-  this.blockDragger_ = new Blockly.BlockDragger(this.targetBlock_,
+  this.blockDragger_ = new Blockly.BlockDragger(this.targetBlock_,!Blockly.isSelectionReversed()?Blockly.selectionTail():Blockly.selected,
       this.startWorkspace_);
   this.blockDragger_.startBlockDrag(this.currentDragDeltaXY_);
   this.blockDragger_.dragBlock(this.mostRecentEvent_,

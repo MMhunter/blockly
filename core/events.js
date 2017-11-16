@@ -181,7 +181,7 @@ Blockly.Events.filter = function(queueIn, forward) {
   // Merge duplicates.
   for (var i = 0, event; event = queue[i]; i++) {
     if (!event.isNull()) {
-      var key = [event.type, event.blockId, event.workspaceId].join(' ');
+      var key = [event.type, event.blockId, event.endBlockId || "", event.workspaceId].join(' ');
       var lastEvent = hash[key];
       if (!lastEvent) {
         hash[key] = event;
@@ -367,6 +367,9 @@ Blockly.Events.Abstract.prototype.toJson = function() {
   if (this.group) {
     json['group'] = this.group;
   }
+  if(this.endBlockId){
+    json['endBlockId'] = this.endBlockId;
+  }
   return json;
 };
 
@@ -376,6 +379,7 @@ Blockly.Events.Abstract.prototype.toJson = function() {
  */
 Blockly.Events.Abstract.prototype.fromJson = function(json) {
   this.blockId = json['blockId'];
+  this.endBlockId = json['endBlockId'];
   this.varId = json['varId'];
   this.group = json['group'];
 };
@@ -718,12 +722,16 @@ Blockly.Events.MoveEnd.prototype.type = Blockly.Events.MOVE_END;
  * @extends {Blockly.Events.Abstract}
  * @constructor
  */
-Blockly.Events.Move = function(block) {
+Blockly.Events.Move = function(block,endBlock) {
   if (!block) {
     return;  // Blank event to be populated by fromJson.
   }
   Blockly.Events.Move.superClass_.constructor.call(this, block);
   var location = this.currentLocation_();
+  this.endBlockId = this.blockId;
+  if(endBlock){
+    this.endBlockId = endBlock.id;
+  }
   this.oldParentId = location.parentId;
   this.oldInputName = location.inputName;
   this.oldCoordinate = location.coordinate;
@@ -833,6 +841,11 @@ Blockly.Events.Move.prototype.run = function(forward) {
     console.warn("Can't move non-existant block: " + this.blockId);
     return;
   }
+  var endBlock = workspace.getBlockById(this.endBlockId);
+  if (!block) {
+      console.warn("Can't move non-existant block: " + this.blockId);
+      return;
+  }
   var parentId = forward ? this.newParentId : this.oldParentId;
   var inputName = forward ? this.newInputName : this.oldInputName;
   var coordinate = forward ? this.newCoordinate : this.oldCoordinate;
@@ -845,7 +858,7 @@ Blockly.Events.Move.prototype.run = function(forward) {
     }
   }
   if (block.getParent()) {
-    block.unplug();
+    block.unplug(true,endBlock);
   }
   if (coordinate) {
     var xy = block.getRelativeToSurfaceXY();
@@ -860,6 +873,12 @@ Blockly.Events.Move.prototype.run = function(forward) {
       }
     } else if (blockConnection.type == Blockly.PREVIOUS_STATEMENT) {
       parentConnection = parentBlock.nextConnection;
+      // if(endBlock.getNextBlock() === parentBlock){
+      //     endBlock.nextConnection.disconnect();
+      // }
+      if(block.getDescendants().indexOf(parentBlock) !== -1){
+        parentBlock.previousConnection.disconnect();
+      }
     }
     if (parentConnection) {
       blockConnection.connect(parentConnection);
