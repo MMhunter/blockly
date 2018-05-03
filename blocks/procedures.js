@@ -800,6 +800,72 @@ Blockly.Blocks['procedures_callreturn'] = {
   defType_: 'procedures_defreturn'
 };
 
+Blockly.Blocks['procedures_itself'] = {
+    /**
+     * Block for procedure itself
+     * @this Blockly.Block
+     */
+    init: function() {
+        this.appendDummyInput('TOPROW')
+            .appendField('', 'NAME')
+            .appendField('函数', 'POSTFIX');
+        this.setOutput(true,'Function');
+        this.setColour(Blockly.Blocks.procedures.HUE);
+        // Tooltip is set in domToMutation.
+        this.setHelpUrl(Blockly.Msg.PROCEDURES_CALLRETURN_HELPURL);
+        this.arguments_ = [];
+        this.quarkConnections_ = {};
+        this.quarkIds_ = null;
+    },
+
+    /**
+     * Create XML to represent the (non-editable) name and arguments.
+     * @return {!Element} XML storage element.
+     * @this Blockly.Block
+     */
+    mutationToDom: function() {
+        var container = document.createElement('mutation');
+        container.setAttribute('name', this.getProcedureCall());
+        return container;
+    },
+    /**
+     * Parse XML to restore the (non-editable) name and parameters.
+     * @param {!Element} xmlElement XML storage element.
+     * @this Blockly.Block
+     */
+    domToMutation: function(xmlElement) {
+        var name = xmlElement.getAttribute('name');
+        this.renameProcedure(this.getProcedureCall(), name);
+    },
+
+    /**
+     * Returns the name of the procedure this block calls.
+     * @return {string} Procedure name.
+     * @this Blockly.Block
+     */
+    getProcedureCall: function() {
+        // The NAME field is guaranteed to exist, null will never be returned.
+        return /** @type {string} */ (this.getFieldValue('NAME'));
+    },
+    /**
+     * Notification that a procedure is renaming.
+     * If the name matches this block's procedure, rename it.
+     * @param {string} oldName Previous name of procedure.
+     * @param {string} newName Renamed procedure.
+     * @this Blockly.Block
+     */
+    renameProcedure: function(oldName, newName) {
+        if (Blockly.Names.equals(oldName, this.getProcedureCall())) {
+            this.setFieldValue(newName, 'NAME');
+            this.setTooltip(
+                (this.outputConnection ? Blockly.Msg.PROCEDURES_CALLRETURN_TOOLTIP :
+                    Blockly.Msg.PROCEDURES_CALLNORETURN_TOOLTIP)
+                    .replace('%1', newName));
+        }
+    },
+};
+
+
 Blockly.Blocks['procedures_ifreturn'] = {
   /**
    * Block for conditionally returning a value from a procedure.

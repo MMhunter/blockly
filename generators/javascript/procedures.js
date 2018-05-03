@@ -93,6 +93,13 @@ Blockly.JavaScript['procedures_callnoreturn'] = function(block) {
   return code;
 };
 
+Blockly.JavaScript['procedures_itself'] = function(block) {
+    // Call a procedure with no return value.
+    var funcName = Blockly.JavaScript.variableDB_.getName(
+        block.getFieldValue('NAME'), Blockly.Procedures.NAME_TYPE);
+    return [funcName,Blockly.JavaScript.ORDER_MEMBER];
+};
+
 Blockly.JavaScript['procedures_ifreturn'] = function(block) {
   // Conditionally return value from a procedure.
   var condition = Blockly.JavaScript.valueToCode(block, 'CONDITION',

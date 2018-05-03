@@ -238,6 +238,16 @@ Blockly.Procedures.flyoutCategory = function(workspace) {
         mutation.appendChild(arg);
       }
       xmlList.push(block);
+
+      //itself
+      block = goog.dom.createDom('block');
+      block.setAttribute('type', 'procedures_itself');
+      block.setAttribute('gap', 16);
+      var mutation = goog.dom.createDom('mutation');
+      mutation.setAttribute('name', name);
+      block.appendChild(mutation);
+      xmlList.push(block);
+
     }
   }
 
